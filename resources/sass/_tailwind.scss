@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.blue {
+  @apply .bg-blue .text-white ;
+}
+.card{
+  @apply .bg-white .rounded-lg .p-5 .shadow;
+}
