@@ -18,16 +18,13 @@ class ProjectsController extends Controller
     }
     public function index()
     {
-        $projects=auth()->user()->projects;
+        $projects=auth()->user()->accessibleProjects();
         return view('projects.index',compact('projects'));
     }
 
     public function show(Project $project)
     {
-
-        if(auth()->user()->isNot($project->owner)) {
-            abort(403);
-        }
+        $this->authorize('update',$project);
         return view('projects.show',compact('project'));
     }
 
@@ -50,16 +47,23 @@ class ProjectsController extends Controller
     {
         return view('projects.edit' ,compact('project'));
     }
+
     public function update(UpdateProjectRequest $request, Project $project)
     {
         //policie
 //        $this->authorize('update',$project);
-
 //        $project->update($request->validated());
         $request->save();
         return redirect($project->path());
     }
 
+    public function destroy(Project $project)
+    {
+        $this->authorize('manage',$project);
+
+        $project->delete();
+        return redirect('/projects');
+    }
     //method 1
     protected function rules()
     {

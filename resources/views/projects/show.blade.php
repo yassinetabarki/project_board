@@ -5,8 +5,16 @@
             <p class="font-normal text-gray-500">
                 <a href="/projects">My Projects</a>/{{$project->title}}
             </p>
-            <a href="{{$project->path().'/edit'}}"
-               class="bg-blue text-sm text-white font-semibold py-2 px-4 border border-gray-400 rounded-lg shadow"> Edit Project</a>
+            <div class="flex items-center">
+                    @foreach($project->members as $member)
+                        <img class="rounded-full w-8 mr-2"
+                             src="{{gravatar_email($member->email)}}"
+                             alt="{{$member->name}} avatars's">
+                    @endforeach
+                    <a href="{{$project->path().'/edit'}}"
+                    class="bg-blue text-sm text-white font-semibold py-2 px-4 border border-gray-400 rounded-lg shadow"> Edit Project</a>
+            </div>
+
         </div>
     </header>
     <main>
@@ -44,14 +52,17 @@
                         <button  class="bg-blue text-sm text-white font-semibold my-4 py-2 px-5 border border-gray-400 rounded-lg shadow"
                                  type="submit">Add Note</button>
                     </form>
+                    @include('projects.errors')
                 </div>
             </div>
             <div class="w-1/4 px-3" style="margin-top: 38px">
                 @include('projects.card')
                 @include('projects.activity.card')
+                @can('manage',$project)
+                    @include('projects.invite')
+                @endcan
             </div>
         </div>
-
     </main>
 
 @endsection

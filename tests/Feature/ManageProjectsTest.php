@@ -17,12 +17,11 @@ class ManageProjectsTest extends TestCase
     public function guests_cannot_manage_project()
     {
         $project=ProjectFactory::create();
-
         $this->get('/projects')->assertRedirect('login');
-        $this->post('/projects/create')->assertRedirect('login');
+        $this->post('/projects')->assertRedirect('login');
         $this->get($project->path())->assertRedirect('login');
         $this->get($project->path().'/edit')->assertRedirect('login');
-        $this->post('/projects/create',$project->toArray())->assertRedirect('login');
+        $this->post('/projects',$project->toArray())->assertRedirect('login');
     }
     /**
      * @test
@@ -30,7 +29,6 @@ class ManageProjectsTest extends TestCase
     public function a_user_can_update_note()
     {
         $this->withoutExceptionHandling();
-
         $project=factory('App\Project')->create(['notes'=>'this note']);
         $this->actingAs($project->owner)->patch($project->path(),['notes'=>'changed']);
         $this->assertDatabaseHas('projects',['notes'=>'changed']);
@@ -41,12 +39,18 @@ class ManageProjectsTest extends TestCase
     public function a_user_can_create_project()
     {
          $this->signIn();
+         $this->get('/projects/create')->assertStatus(200);
+
         $attributs=[
             'title'=>$this->faker->sentence,
             'description'=>$this->faker->sentence,
             'notes' =>  'general note'
         ];
-        $response=$this->post('/projects/create',$attributs);
+         //TODO fix this error
+//        $attributs= factory(Project::class)->raw(['owner_id'=> auth()->id()]);
+
+
+        $response=$this->post('/projects',$attributs);
 
         $project=Project::where($attributs)->first();
 
@@ -59,6 +63,33 @@ class ManageProjectsTest extends TestCase
             ->assertSee($attributs['description'])
             ->assertSee($attributs['notes']);
     }
+    /** @test*/
+    public function unauthorized_users_cannot_delete_projects()
+    {
+        $project=ProjectFactory::create();
+
+        $this->delete($project->path())
+            ->assertRedirect('/login');
+
+        $user=$this->signIn();
+        $this->delete($project->path())
+            ->assertStatus(403);
+
+        $project->invite($user);
+        $this->actingAs($user)->delete($project->path())
+            ->assertStatus(403);
+
+    }
+   /** @test*/
+   public function user_can_delete_a_project()
+   {
+//       $this->withoutExceptionHandling();
+       $project=ProjectFactory::create();
+       $this->actingAs($project->owner)
+           ->delete($project->path())
+           ->assertRedirect('/projects');
+       $this->assertDatabaseMissing('projects',$project->only('id'));
+   }
 
     /**
      * @test
@@ -112,6 +143,18 @@ class ManageProjectsTest extends TestCase
             ->assertSee($project->title)
             ->assertSee(str_limit($project->description));
     }
+    /** @test*/
+    public function a_user_can_see_that_has_been_invited()
+    {
+        $user=$this->signIn();
+
+        $project=ProjectFactory::create();
+
+        $project->invite($user);
+
+        $this->get('/projects')->assertSee($project->title);
+    }
+    
 /**
  * @test
  */
@@ -119,7 +162,7 @@ class ManageProjectsTest extends TestCase
     {
         $this->signIn();
         $attributes=factory('App\Project')->raw(['title'=> '']);
-        $this->post('/projects/create',$attributes)->assertSessionHasErrors('title');
+        $this->post('/projects',$attributes)->assertSessionHasErrors('title');
     }
     /**
      * @test
@@ -128,7 +171,7 @@ class ManageProjectsTest extends TestCase
     {
         $this->signIn();
         $attributes=factory('App\Project')->raw(['description'=> '']);
-        $this->post('/projects/create',$attributes)->assertSessionHasErrors('description');
+        $this->post('/projects',$attributes)->assertSessionHasErrors('description');
     }
 
 }

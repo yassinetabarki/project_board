@@ -29,11 +29,5 @@
                         type="submit">{{$buttonText}}</button>
                 <a class="md:m-3" href="{{$project->path()}}"> Cancle</a>
             </div>
-            @if($errors->any())
-                <div class="field m-3">
-                        @foreach($errors->all() as $error)
-                            <li class="text-sm text-red-600"> {{$error}}</li>
-                        @endforeach
-                </div>
-            @endif
+            @include('projects.errors')
         </div>
